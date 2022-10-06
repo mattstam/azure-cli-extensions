@@ -86,7 +86,7 @@ ManagedClusterIngressProfileWebAppRouting = TypeVar("ManagedClusterIngressProfil
 ManagedClusterSecurityProfileDefender = TypeVar("ManagedClusterSecurityProfileDefender")
 ManagedClusterSecurityProfileNodeRestriction = TypeVar("ManagedClusterSecurityProfileNodeRestriction")
 ManagedClusterWorkloadProfileVerticalPodAutoscaler = TypeVar("ManagedClusterWorkloadProfileVerticalPodAutoscaler")
-
+ManagedClusterNetworkProfileKubeProxyConfig = TypeVar("ManagedClusterNetworkProfileKubeProxyConfig")
 
 # pylint: disable=too-few-public-methods
 class AKSPreviewManagedClusterModels(AKSManagedClusterModels):
@@ -205,6 +205,40 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
         # this parameter does not need dynamic completion
         # this parameter does not need validation
         return http_proxy_config
+
+    def get_kube_proxy_config(self) -> Union[Dict, ManagedClusterNetworkProfileKubeProxyConfig, None]:
+        """Obtain the value of kube_proxy_config.
+
+        :return: dictionary, ManagedClusterNetworkProfileKubeProxyConfig or None
+        """
+        # read the original value passed by the command
+        kube_proxy_config = None
+        kube_proxy_config_file_path = self.raw_param.get("kube_proxy_config")
+        # validate user input
+        if kube_proxy_config_file_path:
+            if not os.path.isfile(kube_proxy_config_file_path):
+                raise InvalidArgumentValueError(
+                    "{} is not valid file, or not accessible.".format(
+                        kube_proxy_config_file_path
+                    )
+                )
+            kube_proxy_config = get_file_json(kube_proxy_config_file_path)
+            if not isinstance(kube_proxy_config, dict):
+                raise InvalidArgumentValueError(
+                    "Error reading kube-proxy config from {}. "
+                    "Please see https://aka.ms/KubeProxyConfig for correct format.".format(
+                        kube_proxy_config_file_path
+                    )
+                )
+
+        # In create mode, try to read the property value corresponding to the parameter from the `mc` object
+        if self.decorator_mode == DecoratorMode.CREATE:
+            if self.mc and self.mc.kube_proxy_config is not None:
+                kube_proxy_config = self.mc.kube_proxy_config
+
+        # this parameter does not need dynamic completion
+        # this parameter does not need validation
+        return kube_proxy_config
 
     def get_pod_cidrs_and_service_cidrs_and_ip_families(self) -> Tuple[
         Union[List[str], None],
@@ -2125,6 +2159,16 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
         mc.http_proxy_config = self.context.get_http_proxy_config()
         return mc
 
+    def set_up_kube_proxy_config(self, mc: ManagedCluster) -> ManagedCluster:
+        """Set up kube-proxy config for the ManagedCluster object.
+
+        :return: the ManagedCluster object
+        """
+        self._ensure_mc(mc)
+
+        mc.kube_proxy_config = self.context.get_kube_proxy_config()
+        return mc
+
     def set_up_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
         """Set up pod security policy for the ManagedCluster object.
 
@@ -2556,6 +2600,47 @@ class AKSPreviewManagedClusterUpdateDecorator(AKSManagedClusterUpdateDecorator):
         mc.http_proxy_config = self.context.get_http_proxy_config()
         return mc
 
+ # what we prob need
+    # def update_load_balancer_profile(self, mc: ManagedCluster) -> ManagedCluster:
+    #     """Update load balancer profile for the ManagedCluster object.
+
+    #     Note: Overwritten in aks-preview to set dual stack related properties.
+
+    #     :return: the ManagedCluster object
+    #     """
+    #     self._ensure_mc(mc)
+
+    #     if not mc.network_profile:
+    #         raise UnknownError(
+    #             "Unexpectedly get an empty network profile in the process of updating load balancer profile."
+    #         )
+
+    #     # In the internal function "_update_load_balancer_profile", it will check whether the provided parameters
+    #     # have been assigned, and if there are any, the corresponding profile will be modified; otherwise, it will
+    #     # remain unchanged.
+    #     mc.network_profile.load_balancer_profile = _update_load_balancer_profile(
+    #         managed_outbound_ip_count=self.context.get_load_balancer_managed_outbound_ip_count(),
+    #         managed_outbound_ipv6_count=self.context.get_load_balancer_managed_outbound_ipv6_count(),
+    #         outbound_ips=self.context.get_load_balancer_outbound_ips(),
+    #         outbound_ip_prefixes=self.context.get_load_balancer_outbound_ip_prefixes(),
+    #         outbound_ports=self.context.get_load_balancer_outbound_ports(),
+    #         idle_timeout=self.context.get_load_balancer_idle_timeout(),
+    #         backend_pool_type=self.context.get_load_balancer_backend_pool_type(),
+    #         profile=mc.network_profile.load_balancer_profile,
+    #         models=self.models.load_balancer_models,
+    #     )
+    #     return mc
+
+    def update_kube_proxy_config(self, mc: ManagedCluster) -> ManagedCluster:
+        """Set up kube-proxy config for the ManagedCluster object.
+
+        :return: the ManagedCluster object
+        """
+        self._ensure_mc(mc)
+
+        mc.kube_proxy_config = self.context.get_kube_proxy_config()
+        return mc
+
     def update_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
         """Update pod security policy for the ManagedCluster object.
 
@@ -2840,6 +2925,8 @@ class AKSPreviewManagedClusterUpdateDecorator(AKSManagedClusterUpdateDecorator):
 
         # set up http proxy config
         mc = self.update_http_proxy_config(mc)
+        # set up kube-proxy config 
+        mc = self.update_kube_proxy_config(mc)
         # update pod security policy
         mc = self.update_pod_security_policy(mc)
         # update pod identity profile

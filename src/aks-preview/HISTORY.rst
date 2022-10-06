@@ -12,6 +12,13 @@ To release a new version, please select a new version number (usually plus 1 to 
 Pending
 +++++++
 
+0.5.105
++++++++
+
+* Add support to create or update kube-proxy configuration. Command is
+    * `az aks create --kube-proxy-config file.json`
+    * `az aks update --kube-proxy-config file.json`
+
 0.5.104
 +++++++
 
