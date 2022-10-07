@@ -5754,7 +5754,7 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
         self.kwargs.update({
             'resource_group': resource_group,
             'name': aks_name,
-            'kube_proxy_path': _get_test_data_file('kubeproxyconfig.json'),
+            'kube_proxy_path': _get_test_data_file('kubeproxyconfig_update.json'),
             'ssh_key_value': self.generate_ssh_keys()
         })
 
