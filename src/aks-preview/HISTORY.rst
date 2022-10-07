@@ -17,7 +17,6 @@ Pending
 
 * Add support to create or update kube-proxy configuration. Command is
     * `az aks create --kube-proxy-config file.json`
-    * `az aks update --kube-proxy-config file.json`
 
 0.5.104
 +++++++

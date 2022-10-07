@@ -2158,21 +2158,6 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
         mc.http_proxy_config = self.context.get_http_proxy_config()
         return mc
 
-    def set_up_kube_proxy_config(self, mc: ManagedCluster) -> ManagedCluster:
-        """Set up kube-proxy config for the ManagedCluster object.
-
-        :return: the ManagedCluster object
-        """
-        self._ensure_mc(mc)
-
-        if not mc.network_profile:
-            raise UnknownError(
-                "Unexpectedly get an empty network profile in the process of updating kube-proxy config."
-            )
-
-        mc.network_profile.kube_proxy_config  = self.context.get_kube_proxy_config()
-        return mc
-
     def set_up_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
         """Set up pod security policy for the ManagedCluster object.
 
@@ -2392,6 +2377,21 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
                 mc.workload_auto_scaler_profile.vertical_pod_autoscaler.enabled = True
         return mc
 
+    def set_up_kube_proxy_config(self, mc: ManagedCluster) -> ManagedCluster:
+        """Set up kube-proxy config for the ManagedCluster object.
+
+        :return: the ManagedCluster object
+        """
+        self._ensure_mc(mc)
+
+        if not mc.network_profile:
+            raise UnknownError(
+                "Unexpectedly get an empty network profile in the process of updating kube-proxy config."
+            )
+
+        mc.network_profile.kube_proxy_config  = self.context.get_kube_proxy_config()
+        return mc
+
     def construct_mc_profile_preview(self, bypass_restore_defaults: bool = False) -> ManagedCluster:
         """The overall controller used to construct the default ManagedCluster profile.
 
@@ -2405,8 +2405,6 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
 
         # set up http proxy config
         mc = self.set_up_http_proxy_config(mc)
-        # set up kube-proxy config
-        mc = self.set_up_kube_proxy_config(mc)
         # set up pod security policy
         mc = self.set_up_pod_security_policy(mc)
         # set up pod identity profile
@@ -2436,6 +2434,8 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
         mc = self.set_up_workload_auto_scaler_profile(mc)
         # set up vpa
         mc = self.set_up_vpa(mc)
+        # set up kube-proxy config
+        mc = self.set_up_kube_proxy_config(mc)
 
         # DO NOT MOVE: keep this at the bottom, restore defaults
         mc = self._restore_defaults_in_mc(mc)
@@ -2604,21 +2604,6 @@ class AKSPreviewManagedClusterUpdateDecorator(AKSManagedClusterUpdateDecorator):
         self._ensure_mc(mc)
 
         mc.http_proxy_config = self.context.get_http_proxy_config()
-        return mc
-
-    def update_kube_proxy_config(self, mc: ManagedCluster) -> ManagedCluster:
-        """Update kube-proxy config for the ManagedCluster object.
-
-        :return: the ManagedCluster object
-        """
-        self._ensure_mc(mc)
-
-        if not mc.network_profile:
-            raise UnknownError(
-                "Unexpectedly get an empty network profile in the process of updating kube-proxy config."
-            )
-
-        mc.network_profile.kube_proxy_config = self.context.get_kube_proxy_config()
         return mc
         
     def update_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
@@ -2905,8 +2890,6 @@ class AKSPreviewManagedClusterUpdateDecorator(AKSManagedClusterUpdateDecorator):
 
         # set up http proxy config
         mc = self.update_http_proxy_config(mc)
-        # set up kube-proxy config
-        mc = self.update_kube_proxy_config(mc)
         # update pod security policy
         mc = self.update_pod_security_policy(mc)
         # update pod identity profile
