@@ -2166,7 +2166,7 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
         """
         self._ensure_mc(mc)
 
-        mc.kube_proxy_config = self.context.get_kube_proxy_config()
+        mc.network_profile.kube_proxy_config  = self.context.get_kube_proxy_config()
         return mc
 
     def set_up_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
@@ -2614,17 +2614,7 @@ class AKSPreviewManagedClusterUpdateDecorator(AKSManagedClusterUpdateDecorator):
 
         mc.network_profile.kube_proxy_config = self.context.get_kube_proxy_config()
         return mc
-
-    def update_kube_proxy_config_old(self, mc: ManagedCluster) -> ManagedCluster:
-        """Set up kube-proxy config for the ManagedCluster object.
-
-        :return: the ManagedCluster object
-        """
-        self._ensure_mc(mc)
-
-        mc.kube_proxy_config = self.context.get_kube_proxy_config()
-        return mc
-
+        
     def update_pod_security_policy(self, mc: ManagedCluster) -> ManagedCluster:
         """Update pod security policy for the ManagedCluster object.
 
