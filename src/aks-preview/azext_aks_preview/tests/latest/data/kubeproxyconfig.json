@@ -2,6 +2,6 @@
     "enabled": true,
     "mode": "IPVS",
     "ipvsConfig": {
-        "scheduler": "RoundRobin"
+        "scheduler": "LeastConnection"
     }
 }

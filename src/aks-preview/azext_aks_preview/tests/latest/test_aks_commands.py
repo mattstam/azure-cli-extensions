@@ -5749,7 +5749,7 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
     @live_only()
     @AllowLargeResponse()
     @AKSCustomResourceGroupPreparer(random_name_length=17, name_prefix='clitest', location='westus2')
-    def test_aks_create_and_update_with_kube_proxy_config(self, resource_group, resource_group_location):
+    def test_aks_create_with_kube_proxy_config(self, resource_group, resource_group_location):
         aks_name = self.create_random_name('cliakstest', 16)
         self.kwargs.update({
             'resource_group': resource_group,
@@ -5763,20 +5763,6 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
                      '--ssh-key-value={ssh_key_value} --enable-managed-identity --yes -o json'
         self.cmd(create_cmd, checks=[
             self.check('provisioningState', 'Succeeded'),
-            self.check('networkProfile.kubeProxyConfig.enabled',True),
-            self.check('networkProfile.kubeProxyConfig.mode','IPVS'),
-            self.check('networkProfile.kubeProxyConfig.ipvsConfig.scheduler', 'RoundRobin'),
-        ])
-
-        self.kwargs.update({
-            'resource_group': resource_group,
-            'name': aks_name,
-            'kube_proxy_path': _get_test_data_file('kubeproxyconfig_update.json'),
-        })
-
-        update_cmd = 'aks update --resource-group={resource_group} --name={name} --kube-proxy-config={kube_proxy_path} --yes -o json'
-
-        self.cmd(update_cmd, checks=[
             self.check('networkProfile.kubeProxyConfig.enabled',True),
             self.check('networkProfile.kubeProxyConfig.mode','IPVS'),
             self.check('networkProfile.kubeProxyConfig.ipvsConfig.scheduler', 'LeastConnection'),
