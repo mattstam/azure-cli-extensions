@@ -395,10 +395,9 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
                     )
                 )
 
-        # In create mode, try to read the property value corresponding to the parameter from the `mc` object
-        if self.decorator_mode == DecoratorMode.CREATE:
-            if self.mc and self.mc.network_profile and self.mc.network_profile.kube_proxy_config is not None:
-                kube_proxy_config = self.mc.network_profile.kube_proxy_config
+        # try to read the property value corresponding to the parameter from the `mc` object
+        if self.mc and self.mc.network_profile and self.mc.network_profile.kube_proxy_config is not None:
+            kube_proxy_config = self.mc.network_profile.kube_proxy_config
 
         # this parameter does not need dynamic completion
         # this parameter does not need validation
@@ -2406,6 +2405,8 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
 
         # set up http proxy config
         mc = self.set_up_http_proxy_config(mc)
+        # set up kube-proxy config
+        mc = self.set_up_kube_proxy_config(mc)
         # set up pod security policy
         mc = self.set_up_pod_security_policy(mc)
         # set up pod identity profile

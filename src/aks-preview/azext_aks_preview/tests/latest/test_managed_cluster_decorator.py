@@ -223,41 +223,6 @@ class AKSPreviewManagedClusterContextTestCase(unittest.TestCase):
         with self.assertRaises(InvalidArgumentValueError):
             ctx_3.get_http_proxy_config()
 
-    def test_get_service_cidrs(self):
-        # default
-        ctx_1 = AKSPreviewManagedClusterContext(
-            self.cmd,
-            AKSManagedClusterParamDict({"service_cidrs": None}),
-            self.models,
-            decorator_mode=DecoratorMode.CREATE,
-        )
-        self.assertEqual(ctx_1.get_service_cidrs(), None)
-        mc = self.models.ManagedCluster(
-            location="test_location",
-            network_profile=self.models.ContainerServiceNetworkProfile(service_cidrs="test_service_cidrs"),
-        )
-        ctx_1.attach_mc(mc)
-        self.assertEqual(
-            ctx_1.get_service_cidrs(),
-            "test_service_cidrs",
-        )
-
-        ctx_2 = AKSPreviewManagedClusterContext(
-            self.cmd,
-            AKSManagedClusterParamDict({"service_cidrs": ""}),
-            self.models,
-            decorator_mode=DecoratorMode.CREATE,
-        )
-        self.assertEqual(ctx_2.get_service_cidrs(), [])
-
-        ctx_3 = AKSPreviewManagedClusterContext(
-            self.cmd,
-            AKSManagedClusterParamDict({"service_cidrs": "10.244.0.0/16,2001:abcd::/64"}),
-            self.models,
-            decorator_mode=DecoratorMode.CREATE,
-        )
-        self.assertEqual(ctx_3.get_service_cidrs(), ["10.244.0.0/16", "2001:abcd::/64"])
-
     def test_get_kube_proxy_config(self):
         # default
         ctx_1 = AKSPreviewManagedClusterContext(
