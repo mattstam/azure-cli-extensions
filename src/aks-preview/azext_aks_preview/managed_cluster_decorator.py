@@ -72,7 +72,6 @@ logger = get_logger(__name__)
 # type variables
 ContainerServiceClient = TypeVar("ContainerServiceClient")
 ContainerServiceNetworkProfileKubeProxyConfig = TypeVar("ContainerServiceNetworkProfileKubeProxyConfig")
-ContainerServiceNetworkProfileKubeProxyConfigIpvsConfig = TypeVar("ContainerServiceNetworkProfileKubeProxyConfigIpvsConfig")
 ManagedCluster = TypeVar("ManagedCluster")
 ManagedClusterAddonProfile = TypeVar("ManagedClusterAddonProfile")
 ManagedClusterHTTPProxyConfig = TypeVar("ManagedClusterHTTPProxyConfig")
@@ -378,7 +377,6 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
         """
         # read the original value passed by the command
         kube_proxy_config = None
-        ipvs_config = None
         kube_proxy_config_file_path = self.raw_param.get("kube_proxy_config")
         # validate user input
         if kube_proxy_config_file_path:
@@ -396,15 +394,10 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
                         kube_proxy_config_file_path
                     )
                 )
-
-        if self.mc and self.mc.network_profile and self.mc.network_profile.kube_proxy_config and self.mc.network_profile.kube_proxy_config.ipvs_config is not None:
-            ipvs_config = self.mc.network_profile.kube_proxy_config.ipvs_config
         
         # try to read the property value corresponding to the parameter from the `mc` object
         if self.mc and self.mc.network_profile and self.mc.network_profile.kube_proxy_config is not None:
             kube_proxy_config = self.mc.network_profile.kube_proxy_config
-        
-        kube_proxy_config.ipvs_config = ipvs_config
 
         # this parameter does not need dynamic completion
         # this parameter does not need validation

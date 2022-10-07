@@ -5754,7 +5754,7 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
         self.kwargs.update({
             'resource_group': resource_group,
             'name': aks_name,
-            'kube_proxy_path': _get_test_data_file('kubeproxyconfig_update.json'),
+            'kube_proxy_path': _get_test_data_file('kubeproxyconfig.json'),
             'ssh_key_value': self.generate_ssh_keys()
         })
 
@@ -5763,11 +5763,9 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
                      '--ssh-key-value={ssh_key_value} --enable-managed-identity --yes -o json'
         self.cmd(create_cmd, checks=[
             self.check('provisioningState', 'Succeeded'),
-        ])
-
-        self.cmd(create_cmd, checks=[
-            self.check('networkProfile.kubeProxyConfig.enabled','true'),
-            self.check('networkProfile.kubeProxyConfig.mode','IPTABLES'),
+            self.check('networkProfile.kubeProxyConfig.enabled',True),
+            self.check('networkProfile.kubeProxyConfig.mode','IPVS'),
+            self.check('networkProfile.kubeProxyConfig.ipvsConfig.scheduler', 'RoundRobin'),
         ])
 
         self.kwargs.update({
@@ -5776,15 +5774,12 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
             'kube_proxy_path': _get_test_data_file('kubeproxyconfig_update.json'),
         })
 
-        update_cmd = 'aks update --resource-group={resource_group} --name={name} --kube-proxy-config={kube_proxy_path}'
+        update_cmd = 'aks update --resource-group={resource_group} --name={name} --kube-proxy-config={kube_proxy_path} --yes -o json'
 
         self.cmd(update_cmd, checks=[
-            self.check('networkProfile.kubeProxyConfig.enabled','true'),
+            self.check('networkProfile.kubeProxyConfig.enabled',True),
             self.check('networkProfile.kubeProxyConfig.mode','IPVS'),
             self.check('networkProfile.kubeProxyConfig.ipvsConfig.scheduler', 'LeastConnection'),
-            self.check('networkProfile.kubeProxyConfig.ipvsConfig.TCPTimeoutSeconds', '900'),
-            self.check('networkProfile.kubeProxyConfig.ipvsConfig.TCPFINTimeoutSeconds', '120'),
-            self.check('networkProfile.kubeProxyConfig.ipvsConfig.UDPTimeoutSeconds', '30s'),
         ])
 
         # delete

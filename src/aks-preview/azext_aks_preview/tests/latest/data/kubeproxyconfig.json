@@ -1,4 +1,7 @@
 {
     "enabled": true,
-    "mode": "IPTABLES"
+    "mode": "IPVS",
+    "ipvsConfig": {
+        "scheduler": "RoundRobin"
+    }
 }
