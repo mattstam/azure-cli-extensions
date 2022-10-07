@@ -234,12 +234,12 @@ class AKSPreviewManagedClusterContextTestCase(unittest.TestCase):
         self.assertEqual(ctx_1.get_kube_proxy_config(), None)
         mc = self.models.ManagedCluster(
             location="test_location",
-            kube_proxy_config=self.models.ManagedClusterNetworkProfileKubeProxyConfig(kube_proxy="test_kube_proxy"),
+            kube_proxy_config=self.models.ContainerServiceNetworkProfileKubeProxyConfig(kube_proxy="test_kube_proxy"),
         )
         ctx_1.attach_mc(mc)
         self.assertEqual(
             ctx_1.get_kube_proxy_config(),
-            self.models.ManagedClusterNetworkProfileKubeProxyConfig(kube_proxy="test_kube_proxy"),
+            self.models.ContainerServiceNetworkProfileKubeProxyConfig(kube_proxy="test_kube_proxy"),
         )
 
         # custom value

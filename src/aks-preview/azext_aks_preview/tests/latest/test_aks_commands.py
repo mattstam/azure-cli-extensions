@@ -5747,7 +5747,7 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
 
     @AllowLargeResponse()
     @AKSCustomResourceGroupPreparer(random_name_length=17, name_prefix='clitest', location='westus2')
-    def test_aks_create_and_update_with_http_proxy_config(self, resource_group, resource_group_location):
+    def test_aks_create_and_update_with_kube_proxy_config(self, resource_group, resource_group_location):
         aks_name = self.create_random_name('cliakstest', 16)
         self.kwargs.update({
             'resource_group': resource_group,
@@ -5756,8 +5756,9 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
             'ssh_key_value': self.generate_ssh_keys()
         })
 
-        create_cmd = 'aks create --resource-group={resource_group} --name={name} --ssh-key-value={ssh_key_value}' \
-                     '--kube-proxy-config={kube_proxy_path} --yes -o json'
+        create_cmd = 'aks create --resource-group={resource_group} --name={name} --kube-proxy-config={kube_proxy_path} ' \
+                     '--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/KubeProxyConfigurationPreview ' \
+                     '--ssh-key-value={ssh_key_value} --enable-managed-identity --yes -o json'
         self.cmd(create_cmd, checks=[
             self.check('provisioningState', 'Succeeded'),
         ])
@@ -5778,8 +5779,12 @@ class AzureKubernetesServiceScenarioTest(ScenarioTest):
         self.cmd(update_cmd, checks=[
             self.check('networkProfile.kubeProxyConfig.enabled','true'),
             self.check('networkProfile.kubeProxyConfig.mode','IPVS'),
-            self.check('networkProfile.kubeProxyConfig.ipvsConfig.Scheduler', 'LeastConnection'),
+            self.check('networkProfile.kubeProxyConfig.ipvsConfig.scheduler', 'LeastConnection'),
             self.check('networkProfile.kubeProxyConfig.ipvsConfig.TCPTimeoutSeconds', '900'),
             self.check('networkProfile.kubeProxyConfig.ipvsConfig.TCPFINTimeoutSeconds', '120'),
             self.check('networkProfile.kubeProxyConfig.ipvsConfig.UDPTimeoutSeconds', '30s'),
         ])
+
+        # delete
+        self.cmd(
+            'aks delete -g {resource_group} -n {name} --yes --no-wait', checks=[self.is_empty()])
