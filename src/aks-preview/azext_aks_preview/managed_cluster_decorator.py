@@ -206,40 +206,6 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
         # this parameter does not need validation
         return http_proxy_config
 
-    def get_kube_proxy_config(self) -> Union[Dict, ContainerServiceNetworkProfileKubeProxyConfig, None]:
-        """Obtain the value of kube_proxy_config.
-
-        :return: dictionary, ContainerServiceNetworkProfileKubeProxyConfig or None
-        """
-        # read the original value passed by the command
-        kube_proxy_config = None
-        kube_proxy_config_file_path = self.raw_param.get("kube_proxy_config")
-        # validate user input
-        if kube_proxy_config_file_path:
-            if not os.path.isfile(kube_proxy_config_file_path):
-                raise InvalidArgumentValueError(
-                    "{} is not valid file, or not accessible.".format(
-                        kube_proxy_config_file_path
-                    )
-                )
-            kube_proxy_config = get_file_json(kube_proxy_config_file_path)
-            if not isinstance(kube_proxy_config, dict):
-                raise InvalidArgumentValueError(
-                    "Error reading kube-proxy config from {}. "
-                    "Please see https://aka.ms/KubeProxyConfig for correct format.".format(
-                        kube_proxy_config_file_path
-                    )
-                )
-
-        # In create mode, try to read the property value corresponding to the parameter from the `mc` object
-        if self.decorator_mode == DecoratorMode.CREATE:
-            if self.mc and self.mc.kube_proxy_config is not None:
-                kube_proxy_config = self.mc.kube_proxy_config
-
-        # this parameter does not need dynamic completion
-        # this parameter does not need validation
-        return kube_proxy_config
-
     def get_pod_cidrs_and_service_cidrs_and_ip_families(self) -> Tuple[
         Union[List[str], None],
         Union[List[str], None],
@@ -403,6 +369,40 @@ class AKSPreviewManagedClusterContext(AKSManagedClusterContext):
         # this parameter does not need dynamic completion
         # this parameter does not need validation
         return load_balancer_backend_pool_type
+
+    def get_kube_proxy_config(self) -> Union[Dict, ContainerServiceNetworkProfileKubeProxyConfig, None]:
+        """Obtain the value of kube_proxy_config.
+
+        :return: dictionary, ContainerServiceNetworkProfileKubeProxyConfig or None
+        """
+        # read the original value passed by the command
+        kube_proxy_config = None
+        kube_proxy_config_file_path = self.raw_param.get("kube_proxy_config")
+        # validate user input
+        if kube_proxy_config_file_path:
+            if not os.path.isfile(kube_proxy_config_file_path):
+                raise InvalidArgumentValueError(
+                    "{} is not valid file, or not accessible.".format(
+                        kube_proxy_config_file_path
+                    )
+                )
+            kube_proxy_config = get_file_json(kube_proxy_config_file_path)
+            if not isinstance(kube_proxy_config, dict):
+                raise InvalidArgumentValueError(
+                    "Error reading kube-proxy config from {}. "
+                    "Please see https://aka.ms/KubeProxyConfig for correct format.".format(
+                        kube_proxy_config_file_path
+                    )
+                )
+
+        # In create mode, try to read the property value corresponding to the parameter from the `mc` object
+        if self.decorator_mode == DecoratorMode.CREATE:
+            if self.mc and self.mc.network_profile and self.mc.network_profile.kube_proxy_config is not None:
+                kube_proxy_config = self.mc.network_profile.kube_proxy_config
+
+        # this parameter does not need dynamic completion
+        # this parameter does not need validation
+        return kube_proxy_config
 
     def _get_enable_pod_security_policy(self, enable_validation: bool = False) -> bool:
         """Internal function to obtain the value of enable_pod_security_policy.
@@ -2165,6 +2165,11 @@ class AKSPreviewManagedClusterCreateDecorator(AKSManagedClusterCreateDecorator):
         :return: the ManagedCluster object
         """
         self._ensure_mc(mc)
+
+        if not mc.network_profile:
+            raise UnknownError(
+                "Unexpectedly get an empty network profile in the process of updating kube-proxy config."
+            )
 
         mc.network_profile.kube_proxy_config  = self.context.get_kube_proxy_config()
         return mc
